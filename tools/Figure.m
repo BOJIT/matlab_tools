@@ -9,7 +9,8 @@ classdef Figure < handle
 
 	%---------------------------- Public Properties ---------------------------%
 	properties
-
+		Handle		% Handle for root figure
+		Axes		% Handle for root axes within figure
 	end
 
 	%---------------------------- Private Properties --------------------------%
