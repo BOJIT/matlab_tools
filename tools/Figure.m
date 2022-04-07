@@ -59,6 +59,10 @@ classdef Figure < handle
 		function handle = plot(obj, varargin)
 			handle = plot(obj.Axes(obj.ActiveAxes), varargin{:});
 		end
+
+		function handle = stem(obj, varargin)
+			handle = stem(obj.Axes(obj.ActiveAxes), varargin{:});
+		end
 	end
 		
 	%------------------------------ Private Methods ---------------------------%

@@ -1,6 +1,8 @@
 # matlab_tools
 Collection of useful tools for MATLAB/GNU Octave. Designed for editing in VSCode
 
+These tools aim to be backward-compatible to `r2018b`.
+
 ## Snippets
 
 Some useful snippets are included:
@@ -16,6 +18,8 @@ Some useful snippets are included:
 - `script`: Generate script boilerplate code
 
 ## Tools
+
+-  `Animation.m`: Tool for creating animated versions of the `Figure` class
 
 - `Control.m`: Utility class for manipulating control networks
 
