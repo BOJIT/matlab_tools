@@ -63,6 +63,10 @@ classdef Figure < handle
 		function handle = stem(obj, varargin)
 			handle = stem(obj.Axes(obj.ActiveAxes), varargin{:});
 		end
+
+		function clearAxes(obj)
+
+		end
 	end
 		
 	%------------------------------ Private Methods ---------------------------%
