@@ -38,6 +38,7 @@ classdef Figure < handle
         function obj = Figure(dimensions)
             % Create figure framework
             obj.Handle = figure();
+            set(obj.Handle, 'color', 'white');
 
             if(nargin > 0)
                 % Create array of pre-formatted axes
