@@ -42,28 +42,56 @@ classdef DSP < handle
             ts.Data = data;
         end
 
+        function ts = impulse(obj, length)
+            pad = zeros(1, length - 1);
+            ts = obj.signal([1, pad]);
+        end
+
+        function ts = step(obj, length, offset)
+            if(nargin > 2)
+                % ts = obj.signal(ones(1, length), offset);
+                padl = zeros(1, offset);
+                padr = ones(1, length - offset);
+                ts = obj.signal([padl, padr]);
+            else
+                ts = obj.signal(ones(1, length));
+            end
+        end
+
         % Create a convolution stem plot of a signal and a window
-        function convolutionPlot(obj, signal, window)
+        function convolutionPlot(obj, signal, filter)
             c = Figure([2, 1]);
 
-            c.SuperTitle = "Convolution of $X(n)$ with respect to window $H(n)$";
-            c.XLabels = "sample number (n)";
+            c.SuperTitle = "Convolution of $X(n)$ with respect to filter $H(n)$";
+            c.XLabel = "Coefficient (n)";
+            % c.XLabels = "sample number (n)";
 
+            % Plot figure as time-series data
             c.ActiveAxes = 1;
-            c.stem(signal.Time, signal.Data, 'b', 'fill');
+            c.stem(filter, 'b', 'fill');
 
+            % Get filter response by convolution
+            response = conv(signal.Data, filter);
+            rdata = obj.signal(response);
+
+            % Plot impulse response
+            c.ActiveAxes = 2;
+            c.XLabel = "sample time (s)";
+
+            c.stem(signal.Time, signal.Data, 'b', 'fill');
+            c.stem(rdata.Time, rdata.Data, 'r', 'fill');
 
         end
     end
-        
+
     %------------------------------ Private Methods ---------------------------%
     methods
-        
+
     end
 
     %------------------------------ Get/Set Methods ---------------------------%
     methods
-        
+
     end
 
 end
