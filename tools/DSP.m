@@ -7,47 +7,47 @@
 
 classdef DSP < handle
 
-	%---------------------------- Public Properties ---------------------------%
-	properties
-		Signal,
-		Window,
-	end
+    %---------------------------- Public Properties ---------------------------%
+    properties
+        Signal,
+        Window,
+    end
 
-	%---------------------------- Private Properties --------------------------%
-	properties (Access = private)
+    %---------------------------- Private Properties --------------------------%
+    properties (Access = private)
 
-	end
+    end
 
-	%------------------------------- Constructor ------------------------------%
-	methods
-		function obj = DSP()
+    %------------------------------- Constructor ------------------------------%
+    methods
+        function obj = DSP()
 
-		end
-	end
+        end
+    end
 
-	%------------------------------ Public Methods ----------------------------%
-	methods
-		function convolutionPlot(obj, signal, window)
-			c = Figure([2, 1]);
+    %------------------------------ Public Methods ----------------------------%
+    methods
+        function convolutionPlot(obj, signal, window)
+            c = Figure([2, 1]);
 
-			c.SuperTitle = "Convolution of $X(n)$ with respect to window $H(n)$";
-			c.XLabels = "sample number (n)";
+            c.SuperTitle = "Convolution of $X(n)$ with respect to window $H(n)$";
+            c.XLabels = "sample number (n)";
 
-			c.ActiveAxes = 1;
-			c.stem(signal, 'b', 'fill');
+            c.ActiveAxes = 1;
+            c.stem(signal, 'b', 'fill');
 
 
-		end
-	end
-		
-	%------------------------------ Private Methods ---------------------------%
-	methods
-		
-	end
+        end
+    end
+        
+    %------------------------------ Private Methods ---------------------------%
+    methods
+        
+    end
 
-	%------------------------------ Get/Set Methods ---------------------------%
-	methods
-		
-	end
+    %------------------------------ Get/Set Methods ---------------------------%
+    methods
+        
+    end
 
 end
