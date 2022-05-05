@@ -34,6 +34,10 @@ classdef MimoControl < handle
 
     %------------------------------ Public Methods ----------------------------%
     methods
+        function [c, rank] = controllabilityMatrix(obj)
+
+        end
+
 
     end
 
