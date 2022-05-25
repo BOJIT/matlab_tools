@@ -38,7 +38,17 @@ classdef MimoControl < handle
 
         end
 
+        function e = eigenValues(obj, m)
 
+        end
+
+        function s = stateObserver(obj, c)
+
+        end
+
+        function showWorkings(obj)
+
+        end
     end
 
     %------------------------------ Private Methods ---------------------------%
