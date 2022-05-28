@@ -11,9 +11,9 @@ classdef MimoControl < handle
     %---------------------------- Public Properties ---------------------------%
     properties
         Constants = struct;
-        C;  % Constant symbolic variables
 
         % Symbolic variable states
+        C;
         U;  % u
         Q;  % q
         Y;  % y
@@ -34,7 +34,12 @@ classdef MimoControl < handle
     %---------------------------- Private Properties --------------------------%
     properties (Access = private)
         p_ISOForm;
-        p_C;            % Backup of constant symbolic variables
+
+        % Backup State
+        p_C;
+        p_U;
+        p_Q;
+        p_Y;
     end
 
     properties (Access = private, Dependent)
@@ -63,14 +68,8 @@ classdef MimoControl < handle
 
     %------------------------------ Public Methods ----------------------------%
     methods
-        function numericConstants(obj, t)
-            if t
-                obj.p_C = obj.C;
-                obj.C = obj.Constants;
-            else
-                obj.C = obj.p_C;
-            end
-        end
+
+        %------------------------------ Model ---------------------------------%
 
         function e = findEquilibriumPoints(obj, constraints)
             const_state = sym(zeros(numel(obj.Q), 1));
@@ -93,12 +92,28 @@ classdef MimoControl < handle
             end
         end
 
-        function s = StateSpaceModel(obj, q, u)
+        function s = StateSpaceModel(obj, q_numeric, u_numeric)
             s = obj.StateSpace;
+
+            for fn = {'A', 'B', 'C'}
+                c_fns = fieldnames(obj.Constants)';
+                c_syms = sym(zeros(numel(c_fns), 1));
+                c_vals = zeros(numel(c_fns), 1);
+                for i = 1:numel(c_fns)
+                    c_syms(i) = obj.C.(c_fns{i});
+                    c_vals(i) = obj.Constants.(c_fns{i});
+                end
+
+                s.(fn{:}) = subs(s.(fn{:}), c_syms, c_vals);
+                s.(fn{:}) = subs(s.(fn{:}), obj.Q, q_numeric');
+                s.(fn{:}) = subs(s.(fn{:}), obj.U, u_numeric');
+
+                s.(fn{:}) = double(round(subs(s.(fn{:})), 4));
+            end
         end
 
+        %---------------------------- Controller ------------------------------%
 
-        % Controller-related methods
         function [c, rank] = controllabilityMatrix(obj)
             % TODO
         end
@@ -110,15 +125,18 @@ classdef MimoControl < handle
         function s = stateObserver(obj, c)
             % TODO
         end
-    end
 
-    %------------------------------ Private Methods ---------------------------%
-    methods
+        %----------------------------- Formatting -----------------------------%
+
         function s = latexMatrix(~, M)
             s = "\left[\begin{matrix}";
             for r = 1:size(M, 1)
                 for c = 1:size(M, 2)
-                    s = strcat(s, latex(M(r, c)));
+                    if isa(M(r, c), 'sym')
+                        s = strcat(s, latex(M(r, c)));
+                    else
+                        s = strcat(s, string(M(r, c)));
+                    end
                     if(c~= size(M, 2))
                         s = strcat(s, "&");
                     end
@@ -132,7 +150,11 @@ classdef MimoControl < handle
             s = "\left\{\begin{matrix}";
             for r = 1:size(M, 1)
                 for c = 1:size(M, 2)
-                    s = strcat(s, latex(M(r, c)));
+                    if isa(M(r, c), 'sym')
+                        s = strcat(s, latex(M(r, c)));
+                    else
+                        s = strcat(s, string(M(r, c)));
+                    end
                     if(c~= size(M, 2))
                         s = strcat(s, "&");
                     end
@@ -140,6 +162,23 @@ classdef MimoControl < handle
                 s = strcat(s, "\\");
             end
             s = strcat(s, "\end{matrix}\right.");
+        end
+    end
+
+    %------------------------------ Private Methods ---------------------------%
+    methods
+        function backupSymbols(obj)
+            obj.p_C = obj.C;
+            obj.p_U = obj.U;
+            obj.p_Q = obj.Q;
+            obj.p_Y = obj.Y;
+        end
+
+        function restoreSymbols(obj)
+            obj.C = obj.p_C;
+            obj.U = obj.p_U;
+            obj.Q = obj.p_Q;
+            obj.Y = obj.p_Y;
         end
     end
 
