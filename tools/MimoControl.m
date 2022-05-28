@@ -92,10 +92,10 @@ classdef MimoControl < handle
             end
         end
 
-        function s = StateSpaceModel(obj, q_numeric, u_numeric)
+        function s = stateSpaceModel(obj, q_numeric, u_numeric)
             s = obj.StateSpace;
 
-            for fn = {'A', 'B', 'C'}
+            for fn = fieldnames(s)'
                 c_fns = fieldnames(obj.Constants)';
                 c_syms = sym(zeros(numel(c_fns), 1));
                 c_vals = zeros(numel(c_fns), 1);
@@ -110,6 +110,14 @@ classdef MimoControl < handle
 
                 s.(fn{:}) = double(round(subs(s.(fn{:})), 4));
             end
+        end
+
+        function t = transferFcn(~, s)
+            % Numerical transfer function to 3.d.p
+            [n, d] = ss2tf(s.A, s.B, s.C, s.D);
+            syms t_full;
+            t_full = poly2sym(n)/poly2sym(d);
+            t = vpa(t_full, 3);
         end
 
         %---------------------------- Controller ------------------------------%
