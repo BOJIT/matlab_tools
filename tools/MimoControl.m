@@ -20,12 +20,12 @@ classdef MimoControl < handle
     end
 
     properties (Dependent)
-
+        ISOForm;
     end
 
     %---------------------------- Private Properties --------------------------%
     properties (Access = private)
-
+        p_ISOForm;
     end
 
     properties (Access = private, Dependent)
@@ -35,20 +35,11 @@ classdef MimoControl < handle
     %------------------------------- Constructor ------------------------------%
     methods
         function obj = MimoControl(dimensions, constants)
-            u = sym('u', [1 dimensions(1)]);
-            for el = u
-                obj.U.(string(el)) = sym(el);
-            end
+            obj.U = sym('u', [1 dimensions(1)]);
 
-            q = sym('q', [1 dimensions(2)]);
-            for el = q
-                obj.Q.(string(el)) = sym(el);
-            end
+            obj.Q = sym('q', [1 dimensions(2)]);
 
-            y = sym('y', [1 dimensions(3)]);
-            for el = y
-                obj.Y.(string(el)) = sym(el);
-            end
+            obj.Y = sym('y', [1 dimensions(3)]);
 
             obj.Constants = constants;
 
@@ -56,6 +47,8 @@ classdef MimoControl < handle
             for fn = fns
                 obj.C.(fn{:}) = sym(fn{:});
             end
+
+            sympref('MatrixWithSquareBrackets',true);
         end
     end
 
@@ -81,12 +74,52 @@ classdef MimoControl < handle
 
     %------------------------------ Private Methods ---------------------------%
     methods
+        function s = latexMatrix(~, M)
+            s = "\left[\begin{matrix}";
+            for r = 1:size(M, 1)
+                for c = 1:size(M, 2)
+                    s = strcat(s, latex(M(r, c)));
+                    if(c~= size(M, 2))
+                        s = strcat(s, "&");
+                    end
+                end
+                s = strcat(s, "\\");
+            end
+            s = strcat(s, "\end{matrix}\right]");
+        end
 
+        function s = latexBrace(~, M)
+            s = "\left\{\begin{matrix}";
+            for r = 1:size(M, 1)
+                for c = 1:size(M, 2)
+                    s = strcat(s, latex(M(r, c)));
+                    if(c~= size(M, 2))
+                        s = strcat(s, "&");
+                    end
+                end
+                s = strcat(s, "\\");
+            end
+            s = strcat(s, "\end{matrix}\right.");
+        end
     end
 
     %------------------------------ Get/Set Methods ---------------------------%
     methods
+        function set.ISOForm(obj, val)
+            terms = numel(obj.Q) + numel(obj.Y);
+            if terms ~= length(val)
+                error("Invalid ISO Form! Expecting %d Equations.", terms);
+            end
 
+            obj.p_ISOForm = val;
+        end
+
+        function val = get.ISOForm(obj)
+            val = obj.p_ISOForm;
+            clipboard('copy', obj.latexBrace(val));
+            disp("ISO Form copied to clipboard");
+            disp("-----------------------------------------------------------");
+        end
     end
 
 end
