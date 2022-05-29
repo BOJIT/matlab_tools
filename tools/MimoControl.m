@@ -50,12 +50,6 @@ classdef MimoControl < handle
         % Numerical Equilibrium Point
         p_Q_Numeric = [];
         p_U_Numeric = [];
-
-        % Backup State
-        p_C;
-        p_U;
-        p_Q;
-        p_Y;
     end
 
     properties (Access = private, Dependent)
@@ -121,6 +115,13 @@ classdef MimoControl < handle
             t = vpa(t_full, 3);
         end
 
+        function out = sym2tf(~, in)
+            [n, d] = numden(in);
+            n_coeff = sym2poly(n);
+            d_coeff = sym2poly(d);
+            out = tf(n_coeff, d_coeff);
+        end
+
         %---------------------------- Controller ------------------------------%
 
         function t = isControllable(obj)
@@ -136,6 +137,23 @@ classdef MimoControl < handle
 
         function s = stateObserver(obj, c)
             % TODO
+        end
+
+        %------------------------------ Plotting ------------------------------%
+
+        function launchDesigner(obj, g)
+            t = obj.sym2tf(g);
+            controlSystemDesigner(t);
+        end
+
+        function plotRootLoci(obj, sys)
+            f1 = Figure;
+            rlocus(f1.Axes(1), obj.sym2tf(sys));
+            f1.Title = "Positive Root Locus";
+
+            f2 = Figure;
+            rlocus(f2.Axes(1), -obj.sym2tf(sys));
+            f2.Title = "Negative Root Locus";
         end
 
         %----------------------------- Formatting -----------------------------%
@@ -178,20 +196,8 @@ classdef MimoControl < handle
     end
 
     %------------------------------ Private Methods ---------------------------%
-    methods
-        function backupSymbols(obj)
-            obj.p_C = obj.C;
-            obj.p_U = obj.U;
-            obj.p_Q = obj.Q;
-            obj.p_Y = obj.Y;
-        end
+    methods (Access = private)
 
-        function restoreSymbols(obj)
-            obj.C = obj.p_C;
-            obj.U = obj.p_U;
-            obj.Q = obj.p_Q;
-            obj.Y = obj.p_Y;
-        end
     end
 
     %------------------------------ Get/Set Methods ---------------------------%
