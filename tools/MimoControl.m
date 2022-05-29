@@ -4,6 +4,15 @@
 % DEPENDENCIES: Symbolic Toolbox, Optimisation Toolbox
 % DATE CREATED: 05/05/2022
 
+% General workflow:
+% - Initialise object with correct state space dimensions and constants
+% - Set the symbolic ISO form
+% - Get symbolic state-space (non-linear)
+% - Get all numeric equilibrium points
+% - Set chosen equilibrium point
+% - get transfer function at this point
+% - check controllability state
+
 %------------------------------------------------------------------------------%
 
 classdef MimoControl < handle
@@ -23,6 +32,8 @@ classdef MimoControl < handle
     properties (Dependent)
         ISOForm;
         StateSpace;
+        EquilibriumStateSpace;
+        ControllabilityMatrix;
 
         % State Space Matrices (for reference purpose only)
         StateA;
@@ -33,7 +44,12 @@ classdef MimoControl < handle
 
     %---------------------------- Private Properties --------------------------%
     properties (Access = private)
+        % Actual ISO Form
         p_ISOForm;
+
+        % Numerical Equilibrium Point
+        p_Q_Numeric = [];
+        p_U_Numeric = [];
 
         % Backup State
         p_C;
@@ -92,38 +108,26 @@ classdef MimoControl < handle
             end
         end
 
-        function s = stateSpaceModel(obj, q_numeric, u_numeric)
-            s = obj.StateSpace;
-
-            for fn = fieldnames(s)'
-                c_fns = fieldnames(obj.Constants)';
-                c_syms = sym(zeros(numel(c_fns), 1));
-                c_vals = zeros(numel(c_fns), 1);
-                for i = 1:numel(c_fns)
-                    c_syms(i) = obj.C.(c_fns{i});
-                    c_vals(i) = obj.Constants.(c_fns{i});
-                end
-
-                s.(fn{:}) = subs(s.(fn{:}), c_syms, c_vals);
-                s.(fn{:}) = subs(s.(fn{:}), obj.Q, q_numeric');
-                s.(fn{:}) = subs(s.(fn{:}), obj.U, u_numeric');
-
-                s.(fn{:}) = double(round(subs(s.(fn{:})), 4));
-            end
+        function setEquilibriumPoints(obj, q, u)
+            obj.p_Q_Numeric = q;
+            obj.p_U_Numeric = u;
         end
 
         function t = transferFcn(~, s)
             % Numerical transfer function to 3.d.p
             [n, d] = ss2tf(s.A, s.B, s.C, s.D);
-            syms t_full;
-            t_full = poly2sym(n)/poly2sym(d);
+            syms t_full s;
+            t_full = poly2sym(n, s)/poly2sym(d, s);
             t = vpa(t_full, 3);
         end
 
         %---------------------------- Controller ------------------------------%
 
-        function [c, rank] = controllabilityMatrix(obj)
-            % TODO
+        function t = isControllable(obj)
+            r = rank(obj.ControllabilityMatrix);
+            s = numel(obj.Q);
+            fprintf("Controllability Matrix Rank: %d, State Dimensions: %d\n", r, s);
+            t = (r == s);
         end
 
         function e = eigenValues(obj, m)
@@ -209,6 +213,43 @@ classdef MimoControl < handle
             val.B = jacobian(q_iso, obj.U);
             val.C = jacobian(y_iso, obj.Q);
             val.D = 0;      % Feed-forward networks not implemented
+        end
+
+        function val = get.EquilibriumStateSpace(obj)
+            if numel(obj.Q) ~= numel(obj.p_Q_Numeric)
+                error("Equilibrium 'q' not set!");
+            end
+
+            if numel(obj.U) ~= numel(obj.p_U_Numeric)
+                error("Equilibrium 'u' not set!");
+            end
+
+            s = obj.StateSpace;
+
+            for fn = fieldnames(s)'
+                c_fns = fieldnames(obj.Constants)';
+                c_syms = sym(zeros(numel(c_fns), 1));
+                c_vals = zeros(numel(c_fns), 1);
+                for i = 1:numel(c_fns)
+                    c_syms(i) = obj.C.(c_fns{i});
+                    c_vals(i) = obj.Constants.(c_fns{i});
+                end
+
+                s.(fn{:}) = subs(s.(fn{:}), c_syms, c_vals);
+                s.(fn{:}) = subs(s.(fn{:}), obj.Q, obj.p_Q_Numeric');
+                s.(fn{:}) = subs(s.(fn{:}), obj.U, obj.p_U_Numeric');
+
+                s.(fn{:}) = double(round(subs(s.(fn{:})), 4));
+            end
+
+            val = s;
+        end
+
+        function val = get.ControllabilityMatrix(obj)
+            val = ctrb(obj.EquilibriumStateSpace.A, obj.EquilibriumStateSpace.B);
+            clipboard('copy', obj.latexMatrix(val));
+            disp("Controllability Matrix copied to clipboard");
+            disp("-----------------------------------------------------------");
         end
 
         %------------------------- LaTex Copy Functions -----------------------%
