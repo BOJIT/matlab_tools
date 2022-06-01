@@ -48,7 +48,7 @@ classdef Figure < handle
                     subplot(dimensions(1), dimensions(2), i, obj.Axes(i));
                 end
             else
-                obj.Axes(1) = obj.createAxes();
+                obj.Axes = [obj.createAxes()];
             end
 
             obj.ActiveAxes = 1;

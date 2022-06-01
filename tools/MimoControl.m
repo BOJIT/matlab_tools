@@ -34,6 +34,7 @@ classdef MimoControl < handle
         StateSpace;
         EquilibriumStateSpace;
         ControllabilityMatrix;
+        ObservabilityMatrix;
 
         % State Space Matrices (for reference purpose only)
         StateA;
@@ -131,12 +132,15 @@ classdef MimoControl < handle
             t = (r == s);
         end
 
-        function e = eigenValues(obj, m)
-            % TODO
+        function t = isObservable(obj)
+            r = rank(obj.ObservabilityMatrix);
+            s = numel(obj.Q);
+            fprintf("Observability Matrix Rank: %d, State Dimensions: %d\n", r, s);
+            t = (r == s);
         end
 
-        function s = stateObserver(obj, c)
-            % TODO
+        function k = stateFeedbackController(obj, e)
+            k = place(obj.EquilibriumStateSpace.A, obj.EquilibriumStateSpace.B, e);
         end
 
         %------------------------------ Plotting ------------------------------%
@@ -154,6 +158,27 @@ classdef MimoControl < handle
             f2 = Figure;
             rlocus(f2.Axes(1), -obj.sym2tf(sys));
             f2.Title = "Negative Root Locus";
+        end
+
+        function f = plotEigenValues(~, v)
+            e = eig(v);
+
+            f = Figure;
+            ax = f.Axes(1);
+            f.plot(e, "*");
+            f.XLabel = "Real Axis";
+            f.YLabel = "Imaginary Axis";
+            ax.XAxisLocation = 'origin';
+            ax.YAxisLocation = 'origin';
+        end
+
+        function f = plotStepResponse(obj, K)
+            A_CL = obj.EquilibriumStateSpace.A - obj.EquilibriumStateSpace.B*K;
+            sys_cl = ss(A_CL, obj.EquilibriumStateSpace.B, ...
+                        obj.EquilibriumStateSpace.C, obj.EquilibriumStateSpace.D);
+
+            f = Figure;
+            step(f.Axes(1), sys_cl);
         end
 
         %----------------------------- Formatting -----------------------------%
@@ -255,6 +280,13 @@ classdef MimoControl < handle
             val = ctrb(obj.EquilibriumStateSpace.A, obj.EquilibriumStateSpace.B);
             clipboard('copy', obj.latexMatrix(val));
             disp("Controllability Matrix copied to clipboard");
+            disp("-----------------------------------------------------------");
+        end
+
+        function val = get.ObservabilityMatrix(obj)
+            val = obsv(obj.EquilibriumStateSpace.A, obj.EquilibriumStateSpace.C);
+            clipboard('copy', obj.latexMatrix(val));
+            disp("Observability Matrix copied to clipboard");
             disp("-----------------------------------------------------------");
         end
 
