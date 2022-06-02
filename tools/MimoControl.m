@@ -139,8 +139,26 @@ classdef MimoControl < handle
             t = (r == s);
         end
 
-        function k = stateFeedbackController(obj, e)
-            k = place(obj.EquilibriumStateSpace.A, obj.EquilibriumStateSpace.B, e);
+        function K = stateFeedbackMatrix(obj, e)
+            K = place(obj.EquilibriumStateSpace.A, obj.EquilibriumStateSpace.B, e);
+        end
+
+        function G = stateObserverMatrix(obj, e)
+           G = place(obj.EquilibriumStateSpace.A', obj.EquilibriumStateSpace.C', e).';
+        end
+
+        function Kr = correctDCGain(obj, K)
+            sys_cl = obj.createController(K, 1);
+
+            K_dc = dcgain(sys_cl);
+            Kr = 1/K_dc;
+            fprintf("System DC Gain: %f, Correction Factor: %f\n", K_dc, Kr);
+        end
+
+        function c = createController(obj, K, Kr)
+            A_CL = obj.EquilibriumStateSpace.A - obj.EquilibriumStateSpace.B*K;
+            c = ss(A_CL, obj.EquilibriumStateSpace.B*Kr, ...
+                        obj.EquilibriumStateSpace.C, obj.EquilibriumStateSpace.D);
         end
 
         %------------------------------ Plotting ------------------------------%
@@ -172,13 +190,12 @@ classdef MimoControl < handle
             ax.YAxisLocation = 'origin';
         end
 
-        function f = plotStepResponse(obj, K)
-            A_CL = obj.EquilibriumStateSpace.A - obj.EquilibriumStateSpace.B*K;
-            sys_cl = ss(A_CL, obj.EquilibriumStateSpace.B, ...
-                        obj.EquilibriumStateSpace.C, obj.EquilibriumStateSpace.D);
+        function f = plotStepResponse(obj, K, Kr)
+            sys_cl = obj.createController(K, Kr);
 
             f = Figure;
             step(f.Axes(1), sys_cl);
+            f.Title = "Step Response for Closed-Loop State Feedback Controller";
         end
 
         %----------------------------- Formatting -----------------------------%
