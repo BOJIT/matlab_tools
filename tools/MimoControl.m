@@ -108,9 +108,10 @@ classdef MimoControl < handle
             obj.p_U_Numeric = u;
         end
 
-        function t = transferFcn(~, s)
+        function t = plantTransferFcn(obj)
             % Numerical transfer function to 3.d.p
-            [n, d] = ss2tf(s.A, s.B, s.C, s.D);
+            [n, d] = ss2tf(obj.EquilibriumStateSpace.A, obj.EquilibriumStateSpace.B, ...
+                            obj.EquilibriumStateSpace.C, obj.EquilibriumStateSpace.D);
             syms t_full s;
             t_full = poly2sym(n, s)/poly2sym(d, s);
             t = vpa(t_full, 3);
@@ -159,6 +160,16 @@ classdef MimoControl < handle
             A_CL = obj.EquilibriumStateSpace.A - obj.EquilibriumStateSpace.B*K;
             c = ss(A_CL, obj.EquilibriumStateSpace.B*Kr, ...
                         obj.EquilibriumStateSpace.C, obj.EquilibriumStateSpace.D);
+        end
+
+        function t = applyController(~, g, c)
+            t_full = g*c/(1+g*c);
+
+            t = vpa(t_full, 3);
+
+            clipboard('copy', latex(t));
+            disp("New closed-loop transfer function copied to clipboard");
+            disp("-----------------------------------------------------------");
         end
 
         %------------------------------ Plotting ------------------------------%
