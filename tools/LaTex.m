@@ -59,7 +59,7 @@ classdef LaTex < handle
 
         function copy(s)
             clipboard('copy', s);
-            fprintf("%s copied to clipboard!", inputname(1));
+            fprintf("%s copied to clipboard!\n", inputname(1));
             disp("-----------------------------------------------------------");
         end
     end
