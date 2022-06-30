@@ -84,11 +84,33 @@ classdef DiscreteController < handle
             LaTex.copy(jury_table);
         end
 
-        function plotStepResponse(z)
-
+        function C_z = compensator()
+            syms K a b z;
+            C_z = K*(z - a)/(z - b);
         end
 
-        function plotTargetPoleLocation(z)
+        function [O_l, C_l] = controller(C_z, G_z)
+            O_l = vpa(C_z*G_z, 4);
+            C_l = vpa(O_l/(1 + O_l), 4);
+        end
+
+        function stepResponse(z, Ts)
+            z_tf = Domain.sym2tf(z, Ts);
+
+            [y, t] = step(z_tf);
+            d = stepinfo(z_tf);
+
+            f = Figure();
+            f.Title = sprintf("Unit Step Response for $$%s$$, $$T_s = %.3f$$\n", LaTex.eq(z), Ts);
+            f.XLabel = "Time (seconds)";
+            f.YLabel = "Amplitude";
+            f.stem(t, y, 'b');
+            f.plot(t, y, '-r');
+
+            % TODO overlay target line, settling specs, percentage overshoot, etc...
+        end
+
+        function plotTargetPoleLocation()
 
         end
 
