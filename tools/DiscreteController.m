@@ -89,13 +89,13 @@ classdef DiscreteController < handle
             C_z = K*(z - a)/(z - b);
         end
 
-        function [O_l, C_l] = controller(C_z, G_z)
-            O_l = vpa(C_z*G_z, 4);
-            C_l = vpa(O_l/(1 + O_l), 4);
+        function [CG_z, W_z] = controller(C_z, G_z)
+            CG_z = vpa(C_z*G_z, 4);
+            W_z = vpa(CG_z/(1 + CG_z), 4);
         end
 
-        function stepResponse(z, Ts, Tsettle)
-            z_tf = Domain.sym2tf(z, Ts);
+        function stepResponse(W_z, Ts, Tsettle)
+            z_tf = Domain.sym2tf(W_z, Ts);
 
             [y, t] = step(z_tf);
 
@@ -114,13 +114,24 @@ classdef DiscreteController < handle
             % Metadata
             yline(f.Axes(1), 1, '--k');
             xline(f.Axes(1), d.SettlingTime, '--g', 'LineWidth', 2);
-            fprintf("Percentage Overshoot: %.3f%%\n", d.Overshoot);
 
-            f.Title = sprintf("Unit Step Response for $$%s$$\n\n $$T_{sample} = %.3f$$, Percentage Overshoot $$= %.3f$$, Settling Time $$= %.3f$$ s\n", LaTex.eq(z), Ts, d.Overshoot, d.SettlingTime);
-
+            f.Title = sprintf("Unit Step Response for $$W_z = %s$$\n\n $$T_{sample} = %.3f$$, Percentage Overshoot $$= %.3f$$, Settling Time $$= %.3f$$ s\n", LaTex.eq(W_z), Ts, d.Overshoot, d.SettlingTime);
         end
 
-        function plotTargetPoleLocation()
+        function rootLocus(G_z, Ts)
+            f = Figure();
+            z_tf = Domain.sym2tf(G_z, Ts);
+            rlocus(f.Axes(1), z_tf);
+            zgrid;
+            xlim([-1.2, 1.2]);
+            ylim([-1.2, 1.2]);
+            axis equal;
+            f.XLabel = "Real Axis";
+            f.YLabel = "Imaginary Axis";
+            f.Title = "Root Locus for $$G_z$$";
+        end
+
+        function targetPoleLocation()
             %
         end
 
