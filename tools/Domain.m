@@ -105,6 +105,14 @@ classdef Domain < handle
         function [z_out, z_terms] = delayForm(z_in)
             z_out = vpa(expand(z_in), 4);
 
+            % Don't calculate delay terms if unknowns are present
+            try
+                double(z_out);
+            catch
+                z_terms = NaN;
+                return;
+            end
+
             % Get delay element correction factor
             [n, d] = numden(z_out);
             n_coeff = sym2poly(vpa(n, 4));

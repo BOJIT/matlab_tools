@@ -94,13 +94,13 @@ classdef DiscreteController < handle
             W_z = vpa(CG_z/(1 + CG_z), 4);
         end
 
-        function stepResponse(W_z, Ts, Tsettle)
+        function stepResponse(W_z, Ts, Settle_Threshold)
             z_tf = Domain.sym2tf(W_z, Ts);
 
             [y, t] = step(z_tf);
 
             if(nargin >= 3)
-                d = stepinfo(z_tf, 'SettlingTimeThreshold', Tsettle);
+                d = stepinfo(z_tf, 'SettlingTimeThreshold', Settle_Threshold);
             else    % default threshold = 2%;
                 d = stepinfo(z_tf);
             end
@@ -131,10 +131,83 @@ classdef DiscreteController < handle
             f.Title = "Root Locus for $$G_z$$";
         end
 
-        function targetPoleLocation()
-            %
+        function z_dominant = targetPoleLocation(Ts, varargin)
+            W_s = (2*pi)/Ts;
+
+            % All possible symbolic variables
+            SettlingTime = sym('SettlingTime');
+            SamplesPerCycle = sym('SamplesPerCycle');
+            Overshoot = sym('Overshoot');
+            DampingRatio = sym('DampingRatio');
+
+            % Parse inputs
+            p = inputParser;
+            addOptional(p,'SettlingTime', SettlingTime, @isnumeric);
+            addOptional(p,'SettleThreshold', 0.02, @isnumeric);
+            addOptional(p,'SamplesPerCycle', SamplesPerCycle, @isnumeric);
+            addOptional(p,'Overshoot', Overshoot, @isnumeric);
+            addOptional(p,'DampingRatio', DampingRatio, @isnumeric);
+            parse(p, varargin{:});
+            e = p.Results;
+
+            % Find Delta
+            delta_sym = {
+                vpa(subs(e.DampingRatio), 4);
+                vpa((abs(log(e.Overshoot))/sqrt(pi^2 + log(e.Overshoot)^2)), 4);
+            };
+
+            delta = cellfun(@DiscreteController.isSolved, delta_sym);
+            delta = rmmissing(delta);
+            if isempty(delta)
+                error("System not fully defined!");
+            end
+
+            % Find Damped Natural Frequency
+            W_d_sym = {
+                subs(W_s/e.SamplesPerCycle);
+                subs((abs(log(e.SettleThreshold))/(delta*e.SettlingTime))*sqrt(1 - delta.^2));
+            };
+
+            W_d = cellfun(@DiscreteController.isSolved, W_d_sym);
+            W_d = rmmissing(W_d);
+            if isempty(W_d)
+                error("System not fully defined!");
+            end
+
+            fprintf("Target Specifications: delta = %.3f, W_d = %.3f\n", delta, W_d);
+
+            % Convert to pole specifications
+            z_mod = exp(-Ts*(delta*W_d)/sqrt(1 - delta^2));
+            z_arg = Ts*W_d;
+            [x_z,y_z] = pol2cart(z_arg, z_mod);
+            z_dominant = x_z + 1i*y_z;
+
+            fprintf("Dominant Pole Target: |z| = %.3f, <z = %.3f rad\n", z_mod, z_arg);
+
+            % Plot target position in the frequency domain
+            f = Figure();
+            zgrid;
+            xlim([-1.2, 1.2]);
+            ylim([-1.2, 1.2]);
+            axis equal;
+            f.XLabel = "Real Axis";
+            f.YLabel = "Imaginary Axis";
+            f.Title = sprintf("Target Pole Location for $$\\delta = %.3f$$, $$W_d = %.3f$$", delta, W_d);
+            f.plot(z_dominant, '*', 'Color', 'r'); % Desired pole
+            legend({'Unit Circle', 'Constant Damping', 'Constant Frequency', 'Target Pole'}, 'location', 'eastoutside');
         end
 
+    end
+
+    %------------------------------ Private Methods ---------------------------%
+    methods (Static, Access=private)
+        function n = isSolved(s)
+            try
+                n = double(s);
+            catch
+                n = NaN;
+            end
+        end
     end
 
 end
