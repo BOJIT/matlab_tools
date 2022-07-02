@@ -58,6 +58,10 @@ classdef LaTex < handle
         end
 
         function copy(s)
+            if isa(s, 'sym')
+                s = LaTex.eq(s);
+            end
+
             clipboard('copy', s);
             fprintf("%s copied to clipboard!\n", inputname(1));
             disp("-----------------------------------------------------------");

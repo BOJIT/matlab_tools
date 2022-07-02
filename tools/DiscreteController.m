@@ -94,24 +94,34 @@ classdef DiscreteController < handle
             C_l = vpa(O_l/(1 + O_l), 4);
         end
 
-        function stepResponse(z, Ts)
+        function stepResponse(z, Ts, Tsettle)
             z_tf = Domain.sym2tf(z, Ts);
 
             [y, t] = step(z_tf);
-            d = stepinfo(z_tf);
+
+            if(nargin >= 3)
+                d = stepinfo(z_tf, 'SettlingTimeThreshold', Tsettle);
+            else    % default threshold = 2%;
+                d = stepinfo(z_tf);
+            end
 
             f = Figure();
-            f.Title = sprintf("Unit Step Response for $$%s$$, $$T_s = %.3f$$\n", LaTex.eq(z), Ts);
             f.XLabel = "Time (seconds)";
             f.YLabel = "Amplitude";
             f.stem(t, y, 'b');
             f.plot(t, y, '-r');
 
-            % TODO overlay target line, settling specs, percentage overshoot, etc...
+            % Metadata
+            yline(f.Axes(1), 1, '--k');
+            xline(f.Axes(1), d.SettlingTime, '--g', 'LineWidth', 2);
+            fprintf("Percentage Overshoot: %.3f%%\n", d.Overshoot);
+
+            f.Title = sprintf("Unit Step Response for $$%s$$\n\n $$T_{sample} = %.3f$$, Percentage Overshoot $$= %.3f$$, Settling Time $$= %.3f$$ s\n", LaTex.eq(z), Ts, d.Overshoot, d.SettlingTime);
+
         end
 
         function plotTargetPoleLocation()
-
+            %
         end
 
     end
