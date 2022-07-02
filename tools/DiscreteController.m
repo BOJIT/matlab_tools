@@ -200,7 +200,7 @@ classdef DiscreteController < handle
             legend({'Unit Circle', 'Constant Damping', 'Constant Frequency', 'Target Pole'}, 'location', 'eastoutside');
         end
 
-        function [phase_gap, real_loc] = evaluateCompensator(CG_z, Ts, target)
+        function [phase_gap, real_loc, target_gain] = evaluateCompensator(CG_z, Ts, target)
             % Plot poles, zeros and targets
             f = Figure();
             f.scale(1.5);
@@ -242,10 +242,18 @@ classdef DiscreteController < handle
             phase_gap_degrees = mult*180 - gamma;    % Nearest 180 degrees gap
             phase_gap = deg2rad(phase_gap_degrees);
             fprintf("C(z)*G(z) Total Gamma: %.3f degrees\n", gamma);
-            fprintf("C(z)*G(z) Required Compensator: %.3f degrees = %.3f rad\n\n", phase_gap_degrees, phase_gap);
+            fprintf("C(z)*G(z) Required Compensator: %.3f degrees = %.3f rad\n", phase_gap_degrees, phase_gap);
 
             % Work out where the required singularity needs to be
             real_loc = real(target) - imag(target)/tan(phase_gap);
+
+            % Calculate gain of C(z)*G(z)
+            target_gain = abs(evalfr(z_tf, target));
+            fprintf("C(z)*G(z) Gain at target: %.3f\n", target_gain);
+        end
+
+        function deadbeatController(G_z, Ts)
+
         end
 
     end
