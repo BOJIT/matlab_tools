@@ -106,6 +106,7 @@ classdef DiscreteController < handle
             end
 
             f = Figure();
+            f.scale(1.5);
             f.XLabel = "Time (seconds)";
             f.YLabel = "Amplitude";
             f.stem(t, y, 'b');
@@ -115,11 +116,12 @@ classdef DiscreteController < handle
             yline(f.Axes(1), 1, '--k');
             xline(f.Axes(1), d.SettlingTime, '--g', 'LineWidth', 2);
 
-            f.Title = sprintf("Unit Step Response for $$W_z = %s$$\n\n $$T_{sample} = %.3f$$, Percentage Overshoot $$= %.3f$$, Settling Time $$= %.3f$$ s\n", LaTex.eq(W_z), Ts, d.Overshoot, d.SettlingTime);
+            f.Title = sprintf("Unit Step Response for $$W(z) = %s$$\n\n $$T_{sample} = %.3f$$, Percentage Overshoot $$= %.3f$$, Settling Time $$= %.3f$$ s\n", LaTex.eq(W_z), Ts, d.Overshoot, d.SettlingTime);
         end
 
         function rootLocus(G_z, Ts)
             f = Figure();
+            f.scale(1.5);
             z_tf = Domain.sym2tf(G_z, Ts);
             rlocus(f.Axes(1), z_tf);
             zgrid;
@@ -131,7 +133,7 @@ classdef DiscreteController < handle
             f.Title = "Root Locus for $$G_z$$";
         end
 
-        function z_dominant = targetPoleLocation(Ts, varargin)
+        function target = targetPoleLocation(Ts, varargin)
             W_s = (2*pi)/Ts;
 
             % All possible symbolic variables
@@ -180,12 +182,13 @@ classdef DiscreteController < handle
             z_mod = exp(-Ts*(delta*W_d)/sqrt(1 - delta^2));
             z_arg = Ts*W_d;
             [x_z,y_z] = pol2cart(z_arg, z_mod);
-            z_dominant = x_z + 1i*y_z;
+            target = x_z + 1i*y_z;
 
-            fprintf("Dominant Pole Target: |z| = %.3f, <z = %.3f rad\n", z_mod, z_arg);
+            fprintf("Dominant Pole Target: |z| = %.3f, <z = %.3f rad\n\n", z_mod, z_arg);
 
             % Plot target position in the frequency domain
             f = Figure();
+            f.scale(1.5);
             zgrid;
             xlim([-1.2, 1.2]);
             ylim([-1.2, 1.2]);
@@ -193,8 +196,56 @@ classdef DiscreteController < handle
             f.XLabel = "Real Axis";
             f.YLabel = "Imaginary Axis";
             f.Title = sprintf("Target Pole Location for $$\\delta = %.3f$$, $$W_d = %.3f$$", delta, W_d);
-            f.plot(z_dominant, '*', 'Color', 'r'); % Desired pole
+            f.plot(target, '*', 'Color', 'r'); % Desired pole
             legend({'Unit Circle', 'Constant Damping', 'Constant Frequency', 'Target Pole'}, 'location', 'eastoutside');
+        end
+
+        function [phase_gap, real_loc] = evaluateCompensator(CG_z, Ts, target)
+            % Plot poles, zeros and targets
+            f = Figure();
+            f.scale(1.5);
+
+            z_tf = Domain.sym2tf(CG_z, Ts);
+            pzmap(f.Axes(1), z_tf);
+
+            zgrid;
+            xlim([-1.2, 1.2]);
+            ylim([-1.2, 1.2]);
+            axis equal;
+            f.XLabel = "Real Axis";
+            f.YLabel = "Imaginary Axis";
+            f.Title = "Pole-Zero Map for $$C(z)*G(z)$$ with respect to target pole";
+            f.plot(target, '*', 'Color', 'r'); % Desired pole
+
+            % Plot zoining lines and find total gamma offset
+            z_p = pole(z_tf);
+            z_z = zero(z_tf);
+            gamma_p = zeros(1, length(z_p));
+            gamma_z = zeros(1, length(z_z));
+
+            for n =1:length(z_p)
+                f.plot([real(z_p(n)), real(target)], [imag(z_p(n)), imag(target)], '-b');
+                gamma_p(n) = rad2deg(atan2((imag(target) - imag(z_p(n))), (real(target) - real(z_p(n)))));
+            end
+
+            for n =1:length(z_z)
+                f.plot([real(z_z(n)), real(target)], [imag(z_z(n)), imag(target)], '-m');
+                gamma_z(n) = rad2deg(atan2((imag(target) - imag(z_z(n))), (real(target) - real(z_z(n)))));
+            end
+
+            fprintf("C(z)*G(z) Pole Phase Lags: "); disp(gamma_p);
+            fprintf("C(z)*G(z) Zero Phase Leads: "); disp(gamma_z);
+            fprintf("\n");
+
+            mult = -1; % HACK: ignore for now
+            gamma = sum(gamma_z) - sum(gamma_p);
+            phase_gap_degrees = mult*180 - gamma;    % Nearest 180 degrees gap
+            phase_gap = deg2rad(phase_gap_degrees);
+            fprintf("C(z)*G(z) Total Gamma: %.3f degrees\n", gamma);
+            fprintf("C(z)*G(z) Required Compensator: %.3f degrees = %.3f rad\n\n", phase_gap_degrees, phase_gap);
+
+            % Work out where the required singularity needs to be
+            real_loc = real(target) - imag(target)/tan(phase_gap);
         end
 
     end

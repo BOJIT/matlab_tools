@@ -10,7 +10,7 @@ classdef Figure < handle
     %---------------------------- Public Properties ---------------------------%
     properties
         Handle		% Handle for root figure
-        Axes		% Handle for root axes within 
+        Axes		% Handle for root axes within
         ActiveAxes	% Selected target axes
     end
 
@@ -18,7 +18,7 @@ classdef Figure < handle
         Title		% Graph title
         XLabel		% X-Axis label (LaTex)
         YLabel		% Y-Axis label (LaTex)
-        
+
         SuperTitle	% Set title for top of figure
         XLabels		% Set X-Axis label (LaTex) for all graphs
         YLabels		% Set Y-Axis label (LaTex) for all graphs
@@ -68,8 +68,16 @@ classdef Figure < handle
         function clearAxes(obj)
 
         end
+
+        function scale(obj, sf)
+            pos = get(obj.Handle, 'Position');
+            width = pos(3); height = pos(4);
+            new_pos = pos;
+            new_pos(3) = round(width * sf); new_pos(4) = round(height * sf);
+            set(obj.Handle, 'Position', new_pos);
+        end
     end
-        
+
     %------------------------------ Private Methods ---------------------------%
     methods
         function handle = createAxes(obj, varargin)
