@@ -158,7 +158,7 @@ classdef DiscreteController < handle
                 vpa((abs(log(e.Overshoot))/sqrt(pi^2 + log(e.Overshoot)^2)), 4);
             };
 
-            delta = cellfun(@DiscreteController.isSolved, delta_sym);
+            delta = cellfun(@Maths.isSolved, delta_sym);
             delta = rmmissing(delta);
             if isempty(delta)
                 error("System not fully defined!");
@@ -170,7 +170,7 @@ classdef DiscreteController < handle
                 subs((abs(log(e.SettleThreshold))/(delta*e.SettlingTime))*sqrt(1 - delta.^2));
             };
 
-            W_d = cellfun(@DiscreteController.isSolved, W_d_sym);
+            W_d = cellfun(@Maths.isSolved, W_d_sym);
             W_d = rmmissing(W_d);
             if isempty(W_d)
                 error("System not fully defined!");
@@ -256,17 +256,6 @@ classdef DiscreteController < handle
 
         end
 
-    end
-
-    %------------------------------ Private Methods ---------------------------%
-    methods (Static, Access=private)
-        function n = isSolved(s)
-            try
-                n = double(s);
-            catch
-                n = NaN;
-            end
-        end
     end
 
 end

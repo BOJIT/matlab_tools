@@ -97,6 +97,8 @@ classdef Domain < handle
             z_tf = zpk(Domain.sym2tf(z, Ts));
             if (nargin >= 3) && (tustin == true)
                 s_tf = d2c(z_tf, 'tustin');       % Assumes zero-order-hold
+            else
+                s_tf = d2c(z_tf);       % Assumes zero-order-hold
             end
             s_tf.Variable = 's';
             s = Domain.tf2sym(s_tf, 's');
