@@ -9,19 +9,19 @@ classdef Figure < handle
 
     %---------------------------- Public Properties ---------------------------%
     properties
-        Handle		% Handle for root figure
-        Axes		% Handle for root axes within
-        ActiveAxes	% Selected target axes
+        Handle      % Handle for root figure
+        Axes        % Handle for root axes within
+        ActiveAxes  % Selected target axes
     end
 
     properties (Dependent)
-        Title		% Graph title
-        XLabel		% X-Axis label (LaTex)
-        YLabel		% Y-Axis label (LaTex)
+        Title       % Graph title
+        XLabel      % X-Axis label (LaTex)
+        YLabel      % Y-Axis label (LaTex)
 
-        SuperTitle	% Set title for top of figure
-        XLabels		% Set X-Axis label (LaTex) for all graphs
-        YLabels		% Set Y-Axis label (LaTex) for all graphs
+        SuperTitle  % Set title for top of figure
+        XLabels     % Set X-Axis label (LaTex) for all graphs
+        YLabels     % Set Y-Axis label (LaTex) for all graphs
     end
 
     %---------------------------- Private Properties --------------------------%

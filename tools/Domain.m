@@ -128,12 +128,37 @@ classdef Domain < handle
             z_out = Domain.tf2sym(z_e, v);
         end
 
-        function pzPlotS(s)
+        function pzPlotS(F_s)
+            % Plot poles, zeros and targets
+            f = Figure();
+            f.scale(1.5);
 
+            s_tf = Domain.sym2tf(F_s);
+            pzmap(f.Axes(1), s_tf);
+
+            % xlim([-1.2, 1.2]);
+            % ylim([-1.2, 1.2]);
+            axis equal;
+            f.XLabel = "Real Axis";
+            f.YLabel = "Imaginary Axis";
+            f.Title = "Pole-Zero Map";
         end
 
-        function pzPlotZ(z)
+        function pzPlotZ(F_z)
+            % Plot poles, zeros and targets
+            f = Figure();
+            f.scale(1.5);
 
+            z_tf = Domain.sym2tf(F_z, 1);
+            pzmap(f.Axes(1), z_tf);
+
+            zgrid;
+            % xlim([-1.2, 1.2]);
+            % ylim([-1.2, 1.2]);
+            axis equal;
+            f.XLabel = "Real Axis";
+            f.YLabel = "Imaginary Axis";
+            f.Title = "Pole-Zero Map";
         end
     end
 
