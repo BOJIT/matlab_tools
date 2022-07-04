@@ -56,12 +56,20 @@ classdef FFT < handle
 
             % Allocate array for step indices
             t = zeros(n, steps + 1);
-            t(:, 1) = data;
 
-            % Add inital labels
+            if (method == "dif")
+                t(:, 1) = data;
+                b_label = 0:(n - 1);
+            else %(method == "dit")
+                % Update first row to use bit-reversals
+                t(:, 1) = bitrevorder(data);
+                b_label = bitrevorder(0:(n - 1));
+            end
+
+            % Add first row labels
             for b = 0:(n - 1)
-                txtkey = texlabel(sprintf('X(%u)', b));
-                txtval = texlabel(sprintf('= %.2f', t((b + 1), 1)));
+                txtkey = texlabel(sprintf('X(%u)', b_label(b + 1)));
+                txtval = texlabel(sprintf('= %.2f + %.2fi', real(t((b + 1), 1)), imag(t((b + 1), 1))));
                 text(f.Axes(1), (0 - pad/2), (n - b - 1), {txtkey, txtval});
             end
 
@@ -74,29 +82,34 @@ classdef FFT < handle
                 end
 
                 for b = 0:(n - 1)
+                    if (method == "dif")
+                        twd_power = bitshift(mod(b, b_type), s);
+                    else %(method == "dit")
+                        twd_power = bitshift(mod(b, b_type), steps - s - 1);
+                    end
+                    twd_mult = twiddle_factor^twd_power;
+
                     if bitand(b, b_type)
-                        % Compute next term (no twiddle factor)
-
-                        t((b + 1), (s + 2)) = t((b + 1 - b_type), (s + 1)) - t((b + 1), (s + 1));
-
-                        % Twiddle Factor Calculation
+                        % Compute next term
+                        txttwd = texlabel(sprintf('W_n^%u = %.1f + %.1fi', twd_power, real(twd_mult), imag(twd_mult)));
                         if (method == "dif")
-                            twd_power = bitshift(mod(b, b_type), s);
-                            txttwd = texlabel(sprintf('W_n^%u', twd_power));
-                            text(f.Axes(1), (s + 1 - 1.5*pad), (n - b - 1.25), txttwd, 'Color', 'red');
+                            t((b + 1), (s + 2)) = (t((b + 1 - b_type), (s + 1)) - t((b + 1), (s + 1)))*twd_mult;
+                            text(f.Axes(1), (s + 0.6 + pad), (n - b - 1.25), txttwd, 'Color', 'red');
                         else %(method == "dit")
-                            twd_power = bitshift(mod(b, b_type), steps - s - 1);
-                            txttwd = texlabel(sprintf('W_n^%u', twd_power));
-                            text(f.Axes(1), (s + 1*pad), (n - b - 1.25), txttwd, 'Color', 'red');
+                            t((b + 1), (s + 2)) = t((b + 1 - b_type), (s + 1)) - (t((b + 1), (s + 1))*twd_mult);
+                            text(f.Axes(1), (s + pad), (n - b - 1.25), txttwd, 'Color', 'red');
                         end
-
 
                         % Draw butterfly arrows
                         f.arrow([s + pad, s + 1 - pad], [n - b - 1, n - b - 1], 'green');
                         f.arrow([s + pad, s + 1 - pad], [n - b - 1 + b_type, n - b - 1], 'black');
                     else
-                        % Compute next term (no twiddle factor)
-                        t((b + 1), (s + 2)) = t((b + 1), (s + 1)) + t((b + 1 + b_type), (s + 1));
+                        % Compute next term
+                        if (method == "dif")
+                            t((b + 1), (s + 2)) = t((b + 1), (s + 1)) + t((b + 1 + b_type), (s + 1));
+                        else %(method == "dit")
+                            t((b + 1), (s + 2)) = t((b + 1), (s + 1)) + (t((b + 1 + b_type), (s + 1))*twd_mult);
+                        end
 
                         % Draw butterfly arrows
                         f.arrow([s + pad, s + 1 - pad], [n - b - 1, n - b - 1], 'blue');
@@ -105,22 +118,29 @@ classdef FFT < handle
 
                     % Add label
                     if s ~= (steps - 1)
-                        txtkey = texlabel(sprintf('t'));
-                        txtval = texlabel(sprintf('= %.2f', t((b + 1), (s + 1))));
+                        txtkey = texlabel(sprintf('%.2f', real(t((b + 1), (s + 2)))));
+                        txtval = texlabel(sprintf('+ %.2fi', imag(t((b + 1), (s + 2)))));
                         text(f.Axes(1), (s + 1 - pad/2), (n - b - 1), {txtkey, txtval});
                     end
                 end
             end
 
-            % Update last row to use bit-reversals
-            b_rev = bitrevorder(0:(n - 1));
+            if (method == "dif")
+                % Update last row to use bit-reversals
+                b_label = bitrevorder(0:(n - 1));
+                result = bitrevorder(t(:, end)).';
+            else %(method == "dit")
+                b_label = 0:(n - 1);
+                result = t(:, end).';
+            end
+
+            % Add final row labels
             for b = 0:(n - 1)
-                txtkey = texlabel(sprintf('X(%u)', b_rev(b + 1)));
-                txtval = texlabel(sprintf('= %.2f', t((b + 1), end)));
+                txtkey = texlabel(sprintf('X(%u)', b_label(b + 1)));
+                txtval = texlabel(sprintf('= %.2f + %.2fi', real(t((b + 1), end)), imag(t((b + 1), end))));
                 text(f.Axes(1), (steps - pad/2), (n - b - 1), {txtkey, txtval});
             end
 
-            result = bitrevorder(t(:, end)');
         end
 
         function fftProperties(data)
