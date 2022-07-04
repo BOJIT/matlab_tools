@@ -1,27 +1,38 @@
-% FILE:         FFTUtils.m
+% FILE:         FFT.m
 % DESCRIPTION:  FFT Utilities
 % AUTHOR:       James Bennion-Pedley
 % DATE CREATED: 30/06/2022
 
 %------------------------------------------------------------------------------%
 
-classdef FFTUtils < handle
+classdef FFT < handle
 
     %------------------------------- Constructor ------------------------------%
     methods
-        function obj = FFTUtils()
-
+        function obj = FFT()
+            % NOTE this utility class assumes 2^n padded data
         end
     end
 
     %------------------------------ Public Methods ----------------------------%
     methods (Static)
-        function fft(data, method)
-            % NOTE this function requires manual padding
+        function result = fft(data, method)
+            twiddle_factor = exp(-2i*pi/length(data));
 
+            fprintf('Using a twiddle factor = '); disp(twiddle_factor);
+
+            result = FFT.butterfly(data, method, twiddle_factor);
         end
 
-        function t = butterfly(data, method)
+        function result = ifft(data, method)
+            twiddle_factor = 1/exp(-2i*pi/length(data));
+
+            fprintf('Using a twiddle factor = '); disp(twiddle_factor);
+
+            result = FFT.butterfly(data, method, twiddle_factor)./length(data);
+        end
+
+        function result = butterfly(data, method, twiddle_factor)
             if (method ~= "dif") && (method ~= "dit")
                 error("No valid method provided!");
             end
@@ -92,9 +103,11 @@ classdef FFTUtils < handle
             b_rev = bitrevorder(0:(n - 1));
             for b = 0:(n - 1)
                 txtkey = texlabel(sprintf('X(%u)', b_rev(b + 1)));
-                txtval = texlabel(sprintf('= %.2f', t((b + 1), 1)));
+                txtval = texlabel(sprintf('= %.2f', t((b + 1), end)));
                 text(f.Axes(1), (steps - pad/2), (n - b - 1), {txtkey, txtval});
             end
+
+            result = bitrevorder(t(:, end)');
         end
 
         function fftProperties(data)
