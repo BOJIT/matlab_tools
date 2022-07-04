@@ -65,8 +65,17 @@ classdef Figure < handle
             handle = stem(obj.Axes(obj.ActiveAxes), varargin{:});
         end
 
-        function clearAxes(obj)
-
+        function handle = arrow(obj, x, y, color)
+            handle = annotation('arrow');
+            handle.Parent = obj.Axes(obj.ActiveAxes);
+            handle.X = x;
+            handle.Y = y;
+            handle.LineWidth = 1;
+            if(nargin >= 4)
+                handle.Color = color;
+            else
+                handle.Color = 'black';
+            end
         end
 
         function scale(obj, sf)
