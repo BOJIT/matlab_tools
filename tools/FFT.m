@@ -52,7 +52,7 @@ classdef FFT < handle
             set(f.Axes(1),'YTickLabel',[]);
 
             xlim([0 - pad, steps + pad]);
-            ylim([-0.5, n - 0.5])
+            ylim([-1, n])
 
             % Allocate array for step indices
             t = zeros(n, steps + 1);
@@ -76,7 +76,20 @@ classdef FFT < handle
                 for b = 0:(n - 1)
                     if bitand(b, b_type)
                         % Compute next term (no twiddle factor)
+
                         t((b + 1), (s + 2)) = t((b + 1 - b_type), (s + 1)) - t((b + 1), (s + 1));
+
+                        % Twiddle Factor Calculation
+                        if (method == "dif")
+                            twd_power = bitshift(mod(b, b_type), s);
+                            txttwd = texlabel(sprintf('W_n^%u', twd_power));
+                            text(f.Axes(1), (s + 1 - 1.5*pad), (n - b - 1.25), txttwd, 'Color', 'red');
+                        else %(method == "dit")
+                            twd_power = bitshift(mod(b, b_type), steps - s - 1);
+                            txttwd = texlabel(sprintf('W_n^%u', twd_power));
+                            text(f.Axes(1), (s + 1*pad), (n - b - 1.25), txttwd, 'Color', 'red');
+                        end
+
 
                         % Draw butterfly arrows
                         f.arrow([s + pad, s + 1 - pad], [n - b - 1, n - b - 1], 'green');
