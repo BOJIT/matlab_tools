@@ -60,6 +60,8 @@ classdef LaTex < handle
         function copy(s)
             if isa(s, 'sym')
                 s = LaTex.eq(s);
+            elseif ismatrix(s)
+                s = LaTex.matrix(s);
             end
 
             clipboard('copy', s);

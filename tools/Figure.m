@@ -78,6 +78,11 @@ classdef Figure < handle
             end
         end
 
+        function handle = image(obj, varargin)
+            handle = obj.Axes(obj.ActiveAxes);
+            imshow(varargin{:}, 'Parent', handle);
+        end
+
         function scale(obj, sf)
             pos = get(obj.Handle, 'Position');
             width = pos(3); height = pos(4);
