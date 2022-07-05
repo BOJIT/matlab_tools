@@ -30,6 +30,33 @@ classdef Filter < handle
 
     %------------------------------ Public Methods ----------------------------%
     methods (Static)
+        function stackedSignals(signals, labels)
+            f = Figure([length(signals), 1]);
+            f.SuperTitle = "Stacked Signal Plot";
+
+            max_len = 0;
+
+            for i = 1:length(signals)
+                if (length(signals{i}) > max_len); max_len = length(signals{i}); end
+            end
+
+            n = 0:(max_len - 1);
+            c = {'b','r','m','g','y',[.5 .6 .7],[.8 .2 .6]};
+
+            for i = 1:length(signals)
+                f.stem(n, signals{i}, c{mod(i - 1, length(c)) + 1});
+                f.XLabel = "Sample, n";
+                f.YLabel = "Amplitude";
+
+                if nargin >= 2
+                    f.Title = labels{i};
+                end
+
+                f.ActiveAxes = f.ActiveAxes + 1;
+            end
+
+        end
+
         function impulseResponse(in_coeffs, out_coeffs)
             % f = Figure();
             % f.Title = sprintf("FIR Coefficients for order %u filter", order);
