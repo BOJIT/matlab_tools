@@ -57,14 +57,6 @@ classdef Filter < handle
 
         end
 
-        function impulseResponse(in_coeffs, out_coeffs)
-            % f = Figure();
-            % f.Title = sprintf("FIR Coefficients for order %u filter", order);
-            % f.XLabel = "Coefficient (non-causal)";
-            % f.YLabel = "Magnitude";
-            % f.stem(n_vals, y_vals, 'b');
-        end
-
         function freqResponse(F_s, n_coeffs, d_coeffs)
             % Allow operation for both FIR and IIR
             if nargin < 3
@@ -137,8 +129,16 @@ classdef Filter < handle
 
         end
 
-        function bilinearTransform(s)
+        function F_z = bilinearZ(F_s, T)
+            syms s z
+            s_bilinear = (2/T)*((z - 1)/(z + 1));
+            F_z = vpa(simplify(subs(F_s, s, s_bilinear)), 5);
+        end
 
+        function F_s = bilinearS(F_z, T)
+            syms s z
+            z_bilinear = (1 + s*T/2)/(1 - s*T/2);
+            F_s = vpa(simplify(subs(F_z, z, z_bilinear)), 5);
         end
     end
 

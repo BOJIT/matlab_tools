@@ -24,12 +24,58 @@ classdef FFT < handle
             result = FFT.butterfly(data, method, twiddle_factor);
         end
 
+        function [f, s, theta] = normFFT(t, x)
+            %NORM_FFT Simple fft abstraction that returns normalised
+            %frequency-amplitude data.
+
+            % Get data length and step size.
+            % t is assumed to be in seconds
+            % and have a constant sampling rate.
+            samples = length(t);
+            Fs = samples/(t(end) - t(1));   % sampling frequency
+            df = Fs/samples;    % width of a frequency 'bin'
+
+            transform = fftshift(fft(x))/samples;
+
+            % Generate frequency from 'bin' width.
+            % This works with both odd and even numbers of samples.
+            f = fftshift(0:df:df*(samples - 1));
+            f(1:floor(samples/2)) = f(1:floor(samples/2)) - Fs;
+
+            % Give complex fourier series in polar form.
+            % This makes it easy to plot, but can also be reconstructed.
+            s = abs(transform);
+            theta = angle(transform);
+        end
+
         function result = ifft(data, method)
             twiddle_factor = 1/exp(-2i*pi/length(data));
 
             fprintf('Using a twiddle factor = '); disp(twiddle_factor);
 
             result = FFT.butterfly(data, method, twiddle_factor)./length(data);
+        end
+
+        function [x, t] = normIFFT(f, s, theta)
+            %NORM_IFFT Simple ifft abstraction that constructs a signal
+            % in the time domain based on the freqency components.
+
+            % Get data length and step size.
+            % f is assumed to be in Hertz
+            % and have a constant 'bin' width.
+            samples = length(f);
+            t_max = (samples - 1)/(f(end) - f(1));   % sampling frequency
+
+            % Convert polar co-ordinates back into complex form:
+            transform = s.*exp(theta*1i);
+
+            % Undo the Fourier transform, ignore imaginary component:
+            % [imaginary component is only a product of floating-point
+            % rounding error if original data is real].
+            x = real(ifft(ifftshift(transform))*samples);
+
+            % IFFT has to assume that time starts from zero.
+            t = linspace(0, t_max, samples);
         end
 
         function result = butterfly(data, method, twiddle_factor)
@@ -143,20 +189,68 @@ classdef FFT < handle
 
         end
 
-        function fftProperties(data)
+        function saneFFT(data, Ts)
+            t = 0:Ts:(Ts*(length(data) - 1));
 
+            [f_freq, f_magnitude, ~] = FFT.normFFT(t, data);
+
+            f = Figure();
+            f.Title = "FFT Plot with Frequency Bins Labelled";
+            f.XLabel = "Frequency / Hz";
+            f.YLabel = "Amplitude";
+            f.stem(f_freq, f_magnitude);
+
+            f.Axes(1).YAxisLocation = 'origin';
         end
 
         function plotTwoSided(data)
+            data = abs(data); % Ignore phase
 
+            f = Figure();
+            f.Title = "Two-Sided FFT Plot";
+            f.XLabel = "Bin (DC component centred to 0)";
+            f.YLabel = "Amplitude";
+
+            bins = -length(data)/2:(length(data)/2 - 1);
+            freq = fftshift(data)/length(data);
+            f.stem(bins, freq);
+
+            f.Axes(1).YAxisLocation = 'origin';
         end
 
         function plotOneSided(data)
+            data = abs(data); % Ignore phase
 
+            f = Figure();
+            f.Title = "One-Sided FFT Plot";
+            f.XLabel = "Bin";
+            f.YLabel = "Amplitude";
+
+            bins = 0:length(data) - 1;
+            freq = data/length(data);
+            freq(2:end) = 2*freq(2:end);    % Double all components except DC
+
+            f.stem(bins, freq);
+
+            f.Axes(1).YAxisLocation = 'origin';
         end
 
         function plotOneSidedPower(data)
+            data = abs(data); % Ignore phase
 
+            f = Figure();
+            f.Title = "One-Sided FFT Power Plot";
+            f.XLabel = "Bin";
+            f.YLabel = "Amplitude";
+
+            bins = 0:length(data) - 1;
+
+            freq = data.^2/(length(data).^2);
+            freq(2:end) = 2*freq(2:end);    % Double all components except DC
+
+            f.stem(bins, freq);
+
+            f.Axes(1).YAxisLocation = 'origin';
         end
     end
 
