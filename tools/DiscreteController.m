@@ -114,7 +114,9 @@ classdef DiscreteController < handle
 
             % Metadata
             yline(f.Axes(1), 1, '--k');
-            xline(f.Axes(1), d.SettlingTime, '--g', 'LineWidth', 2);
+            if ~isnan(d.SettlingTime)
+                xline(f.Axes(1), d.SettlingTime, '--g', 'LineWidth', 2);
+            end
 
             f.Title = sprintf("Unit Step Response for $$W(z) = %s$$\n\n $$T_{sample} = %.3f$$, Percentage Overshoot $$= %.3f$$, Settling Time $$= %.3f$$ s\n", LaTex.eq(W_z), Ts, d.Overshoot, d.SettlingTime);
         end
