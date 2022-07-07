@@ -128,13 +128,14 @@ classdef Domain < handle
             z_out = Domain.tf2sym(z_e, v);
         end
 
-        function pzPlotS(F_s)
+        function s_zpk = pzPlotS(F_s)
             % Plot poles, zeros and targets
             f = Figure();
             f.scale(1.5);
 
             s_tf = Domain.sym2tf(F_s);
             pzmap(f.Axes(1), s_tf);
+            s_zpk = zpk(s_tf);
 
             % xlim([-1.2, 1.2]);
             % ylim([-1.2, 1.2]);
@@ -144,13 +145,14 @@ classdef Domain < handle
             f.Title = "Pole-Zero Map";
         end
 
-        function pzPlotZ(F_z)
+        function z_zpk = pzPlotZ(F_z)
             % Plot poles, zeros and targets
             f = Figure();
             f.scale(1.5);
 
             z_tf = Domain.sym2tf(F_z, 1);
             pzmap(f.Axes(1), z_tf);
+            z_zpk = zpk(z_tf);
 
             zgrid;
             % xlim([-1.2, 1.2]);
@@ -159,6 +161,31 @@ classdef Domain < handle
             f.XLabel = "Real Axis";
             f.YLabel = "Imaginary Axis";
             f.Title = "Pole-Zero Map";
+        end
+
+        function z_sym = zpkForm(z_zpk)
+            z_num = '';
+            for z_z = z_zpk.Z{:}
+                z_num = strcat(z_num, sprintf('(1 - %.4f*z^-1)*', z_z));
+            end
+
+            if ~isempty(z_num)
+                z_num = z_num(1:end - 1);
+            end
+
+            z_den = '';
+            for z_p = z_zpk.p{:}
+                z_den = strcat(z_den, sprintf('(1 - %.4f*z^-1)*', z_p));
+            end
+
+            if ~isempty(z_den)
+                z_den = z_den(1:end - 1);
+            end
+
+            z_char = sprintf('%.4f*((%s)/(%s))', z_zpk.K, z_num, z_den);
+
+            z_sym = str2sym(z_char);
+            warning("CHECK FOR ZERO FACTORS!!!");
         end
     end
 

@@ -17,7 +17,7 @@ classdef LaTex < handle
     %------------------------------ Public Methods ----------------------------%
     methods (Static)
         function s = eq(p)
-            p_trunc = vpa(p, 3);
+            p_trunc = vpa(p, 4);
             s = latex(p_trunc);
         end
 

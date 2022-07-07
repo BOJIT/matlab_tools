@@ -121,6 +121,23 @@ classdef DiscreteController < handle
             f.Title = sprintf("Unit Step Response for $$W(z) = %s$$\n\n $$T_{sample} = %.3f$$, Percentage Overshoot $$= %.3f$$, Settling Time $$= %.3f$$ s\n", LaTex.eq(W_z), Ts, d.Overshoot, d.SettlingTime);
         end
 
+        function rampResponse(W_z, Ts, Tend)
+            z_tf = Domain.sym2tf(W_z, Ts);
+
+            t = 0:Ts:Tend;
+            [y, t] = lsim(z_tf, t, t);  % Unit Ramp
+
+            f = Figure();
+            f.scale(1.5);
+            f.XLabel = "Time (seconds)";
+            f.YLabel = "Amplitude";
+            f.stem(t, y, 'b');
+            f.plot(t, y, '-r');
+            f.plot([0, Tend], [0, Tend], '--k');
+
+            f.Title = sprintf("Unit Ramp Response for $$W(z) = %s$$\n\n $$T_{sample} = %.3f$$\n", LaTex.eq(W_z), Ts);
+        end
+
         function rootLocus(G_z, Ts)
             f = Figure();
             f.scale(1.5);
@@ -253,11 +270,6 @@ classdef DiscreteController < handle
             target_gain = abs(evalfr(z_tf, target));
             fprintf("C(z)*G(z) Gain at target: %.3f\n", target_gain);
         end
-
-        function deadbeatController(G_z, Ts)
-
-        end
-
     end
 
 end
